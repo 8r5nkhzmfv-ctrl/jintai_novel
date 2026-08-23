@@ -18,13 +18,15 @@
     --text-lock:#3C4A66;
     --line-lock:#22304C;
   }
+  :root{ --vh: 1vh; }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;background:var(--bg-void);color:var(--text-main);font-family:'Zen Kaku Gothic New',sans-serif;overflow:hidden;}
   #app{
     position:relative;width:100%;max-width:720px;margin:0 auto;
     background:radial-gradient(ellipse at 50% -10%, #1B2A4A 0%, var(--bg-void) 60%);
-    height:100vh; /* フォールバック（dvh未対応ブラウザ用） */
-    height:100dvh; /* Safari等でアドレスバーの表示/非表示に追従する動的ビューポート高さ */
+    height:100vh;              /* 古いブラウザ向けフォールバック */
+    height:100svh;             /* ブラウザUIが最大表示された状態でも収まる最小ビューポート */
+    height:calc(var(--vh, 1vh) * 100); /* JSで実測した高さ（最終的にこれが優先される） */
   }
 
   .screen{position:absolute;inset:0;display:none;flex-direction:column;}
@@ -196,6 +198,22 @@
 </div>
 
 <script>
+/* ---------- モバイルブラウザのアドレスバー対策 ----------
+   Safari等はvh/dvh/svhの解釈がバージョン・状況によって不安定なため、
+   window.innerHeight（実際に見えている高さ）を都度CSS変数に反映する。
+------------------------------------------------------- */
+function setRealVH(){
+  document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+}
+setRealVH();
+window.addEventListener('resize', setRealVH);
+window.addEventListener('orientationchange', ()=> setTimeout(setRealVH, 150));
+// Safariはアドレスバーの出入りをresizeイベントで即座に拾わない場合があるため、
+// visualViewportがあればそちらも監視する
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', setRealVH);
+}
+
 /* =========================================================
    データ構造の説明
    ---------------------------------------------------------
