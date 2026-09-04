@@ -17,6 +17,16 @@
     --text-sub:#A9B4C9;
     --text-lock:#3C4A66;
     --line-lock:#22304C;
+    /* フェーズ別アクセントカラー（企画書 第0章に準拠） */
+    --p2-red:#B23A2E;
+    --p3-purple:#5B3A82;
+    --p3-gold:#C9A24B;
+    --p4-teal:#3F8F86;
+    --p4-brown:#8A5A3C;
+    --p5-steel:#37516B;
+    --p6-silver:#9AA5B1;
+    --p7-aqua:#5FAFC4;
+    --p7-green:#2E5C4A;
   }
   :root{ --vh: 1vh; }
   *{box-sizing:border-box;}
@@ -78,8 +88,47 @@
 
   /* ---------- Player ---------- */
   #player-screen{justify-content:flex-end;}
-  #scene-bg{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;}
-  #scene-bg .region-tag{font-family:'Shippori Mincho',serif;color:var(--text-sub);font-size:.8rem;letter-spacing:.15em;opacity:.7;}
+  #scene-bg{flex:1;position:relative;overflow:hidden;}
+  #bg-image{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    opacity:0;transition:opacity .5s ease;
+  }
+  #bg-image.show{opacity:.92;}
+  #char-image{
+    position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+    height:94%;max-height:680px;object-fit:contain;
+    filter:drop-shadow(0 14px 26px rgba(0,0,0,.45));
+    opacity:0;transition:opacity .35s ease;
+  }
+  #char-image.show{opacity:1;}
+
+  /* ---------- 検査値バッジ（画像なし・CSSでデザイン） ---------- */
+  #lab-badge{
+    position:absolute;bottom:14%;left:50%;transform:translateX(-50%) scale(.85);
+    display:none;flex-direction:column;align-items:center;gap:8px;
+    opacity:0;transition:opacity .35s ease, transform .35s ease;
+  }
+  #lab-badge.show{display:flex;opacity:1;transform:translateX(-50%) scale(1);}
+  #lab-badge .badge-ring{
+    width:120px;height:120px;border-radius:50%;
+    background:var(--bg-panel-2);
+    border:3px solid var(--badge-color, var(--accent-vein));
+    box-shadow:0 0 22px color-mix(in srgb, var(--badge-color, var(--accent-vein)) 45%, transparent);
+    display:flex;align-items:center;justify-content:center;
+  }
+  #lab-badge .badge-label{
+    font-family:'Shippori Mincho',serif;font-weight:700;font-size:1.3rem;
+    color:var(--badge-color, var(--accent-vein));letter-spacing:.02em;
+  }
+  #lab-badge .badge-caption{
+    font-size:.7rem;color:var(--text-sub);letter-spacing:.1em;
+  }
+  #scene-bg .region-tag{
+    position:absolute;top:14px;left:50%;transform:translateX(-50%);
+    background:rgba(15,22,38,.55);padding:5px 16px;border-radius:20px;
+    font-family:'Shippori Mincho',serif;color:var(--text-sub);font-size:.78rem;
+    letter-spacing:.12em;
+  }
   #dialogue-box{
     background:linear-gradient(180deg, rgba(22,34,59,0) 0%, var(--bg-panel) 18%);
     padding:18px 22px calc(26px + env(safe-area-inset-bottom));
@@ -133,6 +182,8 @@
   #topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;color:var(--text-sub);font-size:.75rem;}
   #topbar button{background:none;border:none;color:var(--text-sub);font-size:.75rem;cursor:pointer;font-family:inherit;}
   #topbar button:hover{color:var(--text-main);}
+  #topbar .topbar-right{display:flex;align-items:center;gap:14px;}
+  #btn-mute{font-size:1rem;}
 </style>
 </head>
 <body>
@@ -163,9 +214,20 @@
   <div id="player-screen" class="screen">
     <div id="topbar">
       <span id="phase-title-tag"></span>
-      <button id="btn-open-track">記録を見る</button>
+      <div class="topbar-right">
+        <button id="btn-mute">🔊</button>
+        <button id="btn-open-track">記録を見る</button>
+      </div>
     </div>
-    <div id="scene-bg"><span class="region-tag" id="region-tag"></span></div>
+    <div id="scene-bg">
+      <img id="bg-image" src="" alt="">
+      <img id="char-image" src="" alt="">
+      <div id="lab-badge">
+        <div class="badge-ring"><span class="badge-label"></span></div>
+        <span class="badge-caption">検査値</span>
+      </div>
+      <span class="region-tag" id="region-tag"></span>
+    </div>
     <div id="dialogue-box">
       <div id="speaker-name"></div>
       <div id="dialogue-text"></div>
@@ -197,6 +259,9 @@
 
 </div>
 
+<audio id="bgm-a" loop preload="none"></audio>
+<audio id="bgm-b" loop preload="none"></audio>
+
 <script>
 /* ---------- モバイルブラウザのアドレスバー対策 ----------
    Safari等はvh/dvh/svhの解釈がバージョン・状況によって不安定なため、
@@ -220,11 +285,14 @@ if(window.visualViewport){
    PHASES[].scenes[] の各要素は以下のいずれか：
 
    line 型（通常セリフ）:
-     { id, type:'line', speaker, text, region }
+     { id, type:'line', speaker, text, region,
+       bg:'BG01'などの背景ID（images/BG01.jpg を参照、768×1376のJPEG）,
+       charImg:'C01-a'などのキャラ画像ID（images/C01-a.png を参照、透過PNG）,
+       bgm:'usual'|'pop'|'battle'|'unrest'（audio/○○.mp3 を参照） }
      ※ track（振り返り一覧）に載る「メインの筋」の一部
 
    quiz 型（分岐/知識確認クイズ）:
-     { id, type:'quiz', badEnd:true/false, question,
+     { id, type:'quiz', badEnd:true/false, question, bg, bgm,
        options:[{text, correct:true/false, feedback}],
        onCorrectNext: 次のシーンid,
        onWrongNext: badEnd時のみ→バッドエンドシーンid
@@ -232,7 +300,12 @@ if(window.visualViewport){
      ※ badEnd:false の場合、誤答は同じ quiz にとどまり解説を表示
 
    badend 型:
-     { id, type:'badend', title, text, retryTarget: 戻り先quiz id }
+     { id, type:'badend', title, text, retryTarget: 戻り先quiz id,
+       bg, bgm }
+
+   bg / charImg / bgm はすべて省略可（未指定ならその場は変化しない）。
+   画像ファイルが images/ に無い場合はエラーを握りつぶし、
+   単に画像なしで進行する（レイアウトは崩れない）。
 
    他フェーズを追加する場合、この形式で PHASES 配列に
    要素を追加するだけでよい。
@@ -243,21 +316,21 @@ const PHASES = [
     id: 'phase1',
     title: 'フェーズ1｜恒常性本部',
     scenes: [
-      {id:'p1-1', type:'line', region:'恒常性本部', speaker:'制御中枢長官', text:'ようこそ、恒常性本部へ。この体を守る仕組みは単純だ——狂ったら、戻す。それだけだ。'},
-      {id:'p1-2', type:'line', region:'恒常性本部', speaker:'センサー（体温担当）', text:'私たちセンサーは常に外と中の状態を見張ってる。何かがズレたら、すぐ長官に報告するの。'},
-      {id:'p1-3', type:'line', region:'恒常性本部', speaker:'制御中枢長官', text:'報告を受けたら私が判断し、指令を出す。そして——'},
-      {id:'p1-4', type:'line', region:'恒常性本部', speaker:'効果器（汗腺）', text:'指令が来たら、俺たち効果器が実際に体を動かす番だ。センサー→中枢→効果器。この3段階、覚えとけよ新人。'},
+      {id:'p1-1', type:'line', region:'恒常性本部', speaker:'制御中枢長官', text:'ようこそ、恒常性本部へ。この体を守る仕組みは単純だ——狂ったら、戻す。それだけだ。', bg:'BG01', charImg:'C01-a', bgm:'usual'},
+      {id:'p1-2', type:'line', region:'恒常性本部', speaker:'センサー（体温担当）', text:'私たちセンサーは常に外と中の状態を見張ってる。何かがズレたら、すぐ長官に報告するの。', bg:'BG01', charImg:'C02-a', bgm:'usual'},
+      {id:'p1-3', type:'line', region:'恒常性本部', speaker:'制御中枢長官', text:'報告を受けたら私が判断し、指令を出す。そして——', bg:'BG01', charImg:'C01-a', bgm:'usual'},
+      {id:'p1-4', type:'line', region:'恒常性本部', speaker:'効果器（汗腺）', text:'指令が来たら、俺たち効果器が実際に体を動かす番だ。センサー→中枢→効果器。この3段階、覚えとけよ新人。', bg:'BG01', charImg:'S01', bgm:'usual'},
 
-      {id:'p1-5', type:'line', region:'循環器街 体温イベント', speaker:'センサー（体温担当）', text:'長官！ 皮膚と視床下部の温度受容器が異常値を検知！ 体温が上昇してます！'},
-      {id:'p1-6', type:'line', region:'循環器街 体温イベント', speaker:'制御中枢長官', text:'受理した。効果器隊、出動——汗腺は発汗、血管は拡張しろ。放熱で下げる。'},
-      {id:'p1-7', type:'line', region:'循環器街 体温イベント', speaker:'効果器（血管）', text:'拡張、開始……体温、低下し始めています。'},
-      {id:'p1-8', type:'line', region:'循環器街 体温イベント', speaker:'センサー（体温担当）', text:'基準値に戻った……！ これが『上がったら、下げる方向に打ち消す』——負のフィードバックなんですね。'},
+      {id:'p1-5', type:'line', region:'循環器街 体温イベント', speaker:'センサー（体温担当）', text:'長官！ 皮膚と視床下部の温度受容器が異常値を検知！ 体温が上昇してます！', bg:'BG01', charImg:'C02-b', bgm:'unrest'},
+      {id:'p1-6', type:'line', region:'循環器街 体温イベント', speaker:'制御中枢長官', text:'受理した。効果器隊、出動——汗腺は発汗、血管は拡張しろ。放熱で下げる。', bg:'BG01', charImg:'C01-b', bgm:'unrest'},
+      {id:'p1-7', type:'line', region:'循環器街 体温イベント', speaker:'効果器（血管）', text:'拡張、開始……体温、低下し始めています。', bg:'BG01', charImg:'C03-b', bgm:'unrest'},
+      {id:'p1-8', type:'line', region:'循環器街 体温イベント', speaker:'センサー（体温担当）', text:'基準値に戻った……！ これが『上がったら、下げる方向に打ち消す』——負のフィードバックなんですね。', bg:'BG01', charImg:'C02-a', bgm:'usual'},
 
-      {id:'p1-9', type:'line', region:'血糖イベント', speaker:'センサー（血糖担当）', text:'長官、今度は血糖です！ 食後、急上昇しています！'},
-      {id:'p1-10', type:'line', region:'血糖イベント', speaker:'インスリン', text:'呼ばれて参上。肝臓・筋肉・脂肪細胞のみんな、糖を取り込め！ 肝臓はグリコーゲンにして貯蔵だ。'},
-      {id:'p1-11', type:'line', region:'血糖イベント', speaker:'インスリン', text:'……よし、下がった。上がったら下げる。これも同じ仕組みだな。'},
+      {id:'p1-9', type:'line', region:'血糖イベント', speaker:'センサー（血糖担当）', text:'長官、今度は血糖です！ 食後、急上昇しています！', bg:'BG01', charImg:'S02', bgm:'unrest'},
+      {id:'p1-10', type:'line', region:'血糖イベント', speaker:'インスリン', text:'呼ばれて参上。肝臓・筋肉・脂肪細胞のみんな、糖を取り込め！ 肝臓はグリコーゲンにして貯蔵だ。', bg:'BG01', charImg:'C07-b', bgm:'unrest'},
+      {id:'p1-11', type:'line', region:'血糖イベント', speaker:'インスリン', text:'……よし、下がった。上がったら下げる。これも同じ仕組みだな。', bg:'BG01', charImg:'C07-a', bgm:'unrest'},
 
-      {id:'p1-quiz1', type:'quiz', badEnd:true, region:'血糖イベント',
+      {id:'p1-quiz1', type:'quiz', badEnd:true, region:'血糖イベント', bg:'BG01', bgm:'battle',
         question:'空腹時、血糖値が下がりすぎたとき、体は何をして血糖を維持するか？',
         options:[
           {text:'A. インスリンをさらに分泌して血糖を下げ続ける', correct:false},
@@ -266,30 +339,30 @@ const PHASES = [
         ],
         onCorrectNext:'p1-12', onWrongNext:'p1-badend1'
       },
-      {id:'p1-badend1', type:'badend',
+      {id:'p1-badend1', type:'badend', bg:'BG15', bgm:'unrest',
         title:'均衡が崩れた',
         text:'血糖が下がり続け、本部の機能が停止していく……。低血糖を放置すると、意識障害など深刻な事態につながる。もう一度、仕組みを考え直そう。',
         retryTarget:'p1-quiz1'
       },
-      {id:'p1-12', type:'line', region:'血糖イベント', speaker:'グルカゴン', text:'その通り。上げ下げ両方向、俺たちで支えてる。'},
+      {id:'p1-12', type:'line', region:'血糖イベント', speaker:'グルカゴン', text:'その通り。上げ下げ両方向、俺たちで支えてる。', bg:'BG01', charImg:'C08-a', bgm:'usual'},
 
-      {id:'p1-13', type:'line', region:'血圧イベント', speaker:'センサー（血圧担当）', text:'長官！ 頸動脈洞と大動脈弓の圧受容器が反応！ 血圧上昇です！'},
-      {id:'p1-14', type:'line', region:'血圧イベント', speaker:'制御中枢（延髄）', text:'受理。副交感神経、活性化しろ——心臓の拍数を落とせ、血管は拡張だ。'},
-      {id:'p1-15', type:'line', region:'血圧イベント', speaker:'効果器（心臓）', text:'……拍数、低下。血圧、正常範囲に戻りました。'},
-      {id:'p1-16', type:'line', region:'血圧イベント', speaker:'センサー（血圧担当）', text:'体温、血糖、血圧……全部同じ形をしてる。ズレを感知→中枢が判断→効果器が動く→戻る。これが恒常性の正体なんですね。'},
+      {id:'p1-13', type:'line', region:'血圧イベント', speaker:'センサー（血圧担当）', text:'長官！ 頸動脈洞と大動脈弓の圧受容器が反応！ 血圧上昇です！', bg:'BG01', charImg:'S03', bgm:'unrest'},
+      {id:'p1-14', type:'line', region:'血圧イベント', speaker:'制御中枢（延髄）', text:'受理。副交感神経、活性化しろ——心臓の拍数を落とせ、血管は拡張だ。', bg:'BG01', charImg:'C01-b', bgm:'unrest'},
+      {id:'p1-15', type:'line', region:'血圧イベント', speaker:'効果器（心臓）', text:'……拍数、低下。血圧、正常範囲に戻りました。', bg:'BG01', charImg:'C04-a', bgm:'usual'},
+      {id:'p1-16', type:'line', region:'血圧イベント', speaker:'センサー（血圧担当）', text:'体温、血糖、血圧……全部同じ形をしてる。ズレを感知→中枢が判断→効果器が動く→戻る。これが恒常性の正体なんですね。', bg:'BG01', charImg:'S03', bgm:'usual'},
 
-      {id:'p1-17', type:'line', region:'例外ゲスト', speaker:'オキシトシン', text:'待って。私たちは、逆——変化をもっと増幅する側なの。'},
-      {id:'p1-18', type:'line', region:'例外ゲスト', speaker:'制御中枢長官', text:'オキシトシンか。……珍しい客だ。基本的にこの本部は『戻す』仕組みだが、お前たちは違う。'},
-      {id:'p1-19', type:'line', region:'例外ゲスト', speaker:'オキシトシン', text:'出産のときの子宮収縮、それに血液凝固の連鎖——私たちは目的を達成するまで加速し続ける。でも。'},
-      {id:'p1-20', type:'line', region:'例外ゲスト', speaker:'制御中枢長官', text:'目的達成後は、強制的に終了する。暴走を許さない設計だ、それも。'},
+      {id:'p1-17', type:'line', region:'例外ゲスト', speaker:'オキシトシン', text:'待って。私たちは、逆——変化をもっと増幅する側なの。', bg:'BG01', charImg:'S04', bgm:'usual'},
+      {id:'p1-18', type:'line', region:'例外ゲスト', speaker:'制御中枢長官', text:'オキシトシンか。……珍しい客だ。基本的にこの本部は『戻す』仕組みだが、お前たちは違う。', bg:'BG01', charImg:'C01-a', bgm:'usual'},
+      {id:'p1-19', type:'line', region:'例外ゲスト', speaker:'オキシトシン', text:'出産のときの子宮収縮、それに血液凝固の連鎖——私たちは目的を達成するまで加速し続ける。でも。', bg:'BG01', charImg:'S04', bgm:'usual'},
+      {id:'p1-20', type:'line', region:'例外ゲスト', speaker:'制御中枢長官', text:'目的達成後は、強制的に終了する。暴走を許さない設計だ、それも。', bg:'BG01', charImg:'C01-a', bgm:'usual'},
 
-      {id:'p1-21', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'新人、本部の建材も見ておけ。俺たち街は4種類の組織でできてる。上皮組織——被覆・分泌・吸収。皮膚や消化管の内壁を作ってる。'},
-      {id:'p1-22', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'結合組織——支持・連結・貯蔵担当。骨、軟骨、脂肪……あと、実は血液もここの仲間だ。'},
-      {id:'p1-23', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'筋組織——収縮・運動。骨格筋、心筋、平滑筋——お前も見ただろう、さっきの効果器たちだ。'},
-      {id:'p1-24', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'神経組織——情報伝達。俺たち長官やセンサーの正体はこれだ。'},
-      {id:'p1-25', type:'line', region:'区域見学', speaker:'センサー（体温担当）', text:'血液が結合組織って、意外でしょ？ 細胞成分と液体の基質でできてるから、分類上はそっちなの。'},
+      {id:'p1-21', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'新人、本部の建材も見ておけ。俺たち街は4種類の組織でできてる。上皮組織——被覆・分泌・吸収。皮膚や消化管の内壁を作ってる。', bg:'BG01', charImg:'C03-a', bgm:'pop'},
+      {id:'p1-22', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'結合組織——支持・連結・貯蔵担当。骨、軟骨、脂肪……あと、実は血液もここの仲間だ。', bg:'BG01', charImg:'C03-a', bgm:'pop'},
+      {id:'p1-23', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'筋組織——収縮・運動。骨格筋、心筋、平滑筋——お前も見ただろう、さっきの効果器たちだ。', bg:'BG01', charImg:'C03-a', bgm:'pop'},
+      {id:'p1-24', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'神経組織——情報伝達。俺たち長官やセンサーの正体はこれだ。', bg:'BG01', charImg:'C03-a', bgm:'pop'},
+      {id:'p1-25', type:'line', region:'区域見学', speaker:'センサー（体温担当）', text:'血液が結合組織って、意外でしょ？ 細胞成分と液体の基質でできてるから、分類上はそっちなの。', bg:'BG01', charImg:'C02-a', bgm:'pop'},
 
-      {id:'p1-quiz-final', type:'quiz', badEnd:false, region:'まとめクイズ',
+      {id:'p1-quiz-final', type:'quiz', badEnd:false, region:'まとめクイズ', bg:'BG01', bgm:'usual',
         question:'（まとめクイズ・例題）体温上昇時、効果器が行う対応として正しいのは？',
         options:[
           {text:'A. 発汗・血管拡張', correct:true, feedback:'正解。放熱によって体温を下げる。'},
@@ -298,15 +371,15 @@ const PHASES = [
         onCorrectNext:'p1-26', onWrongNext:null
       },
 
-      {id:'p1-26', type:'line', region:'エンディング', speaker:'制御中枢長官', text:'新人、よくやった。だが——最近、報告が妙に多い。個別の乱れではなく、何か……全体に共通する『空気の変質』のようなものを感じる。'},
-      {id:'p1-27', type:'line', region:'エンディング', speaker:'センサー（体温担当）', text:'気のせいでは……？'},
-      {id:'p1-28', type:'line', region:'エンディング', speaker:'制御中枢長官', text:'そうであってほしいがな。次は循環器街だ。行け。'}
+      {id:'p1-26', type:'line', region:'エンディング', speaker:'制御中枢長官', text:'新人、よくやった。だが——最近、報告が妙に多い。個別の乱れではなく、何か……全体に共通する『空気の変質』のようなものを感じる。', bg:'BG01', charImg:'C01-b', bgm:'unrest'},
+      {id:'p1-27', type:'line', region:'エンディング', speaker:'センサー（体温担当）', text:'気のせいでは……？', bg:'BG01', charImg:'C02-a', bgm:'unrest'},
+      {id:'p1-28', type:'line', region:'エンディング', speaker:'制御中枢長官', text:'そうであってほしいがな。次は循環器街だ。行け。', bg:'BG01', charImg:'C01-b', bgm:'unrest'}
     ]
   },
   // --- 以下、フェーズ2〜統合編は同じスキーマで追加可能 -----------------
   {
     id:'phase2', title:'フェーズ2｜循環器街（未実装）', scenes:[
-      {id:'p2-stub', type:'line', region:'準備中', speaker:'―', text:'このフェーズはまだ実装されていません。'}
+      {id:'p2-stub', type:'line', region:'準備中', speaker:'―', text:'このフェーズはまだ実装されていません。', bg:'BG02', bgm:'usual'}
     ]
   },
 ];
@@ -352,6 +425,47 @@ function markReached(sceneId){
     saveProgress(progress);
   }
 }
+
+/* ---------- アセットパス設定（実際のフォルダ構成に合わせて変更可） ---------- */
+const IMG_DIR = 'images/';
+const AUDIO_DIR = 'audio/';
+
+/* ---------- BGM（クロスフェード再生） ---------- */
+let bgmActive = 'a';
+let bgmCurrentKey = null;
+let bgmMuted = false;
+
+function playBgm(key){
+  if(!key || key === bgmCurrentKey) return;
+  bgmCurrentKey = key;
+  const nextId = bgmActive === 'a' ? 'b' : 'a';
+  const activeEl = document.getElementById('bgm-' + bgmActive);
+  const nextEl = document.getElementById('bgm-' + nextId);
+  nextEl.src = AUDIO_DIR + key + '.mp3';
+  nextEl.volume = 0;
+  nextEl.currentTime = 0;
+  if(!bgmMuted){ nextEl.play().catch(()=>{}); }
+  let step = 0;
+  const totalSteps = 20;
+  const timer = setInterval(()=>{
+    step++;
+    const t = step / totalSteps;
+    nextEl.volume = bgmMuted ? 0 : Math.min(1, t);
+    activeEl.volume = bgmMuted ? 0 : Math.max(0, 1 - t);
+    if(step >= totalSteps){
+      clearInterval(timer);
+      activeEl.pause();
+      bgmActive = nextId;
+    }
+  }, 60);
+}
+
+document.getElementById('btn-mute').addEventListener('click', (e)=>{
+  bgmMuted = !bgmMuted;
+  e.target.textContent = bgmMuted ? '🔇' : '🔊';
+  document.getElementById('bgm-a').volume = bgmMuted ? 0 : (bgmActive==='a' ? 1 : 0);
+  document.getElementById('bgm-b').volume = bgmMuted ? 0 : (bgmActive==='b' ? 1 : 0);
+});
 
 /* ---------- 画面切り替え ---------- */
 function showScreen(id){
@@ -415,17 +529,86 @@ function renderCurrentScene(){
   document.getElementById('quiz-overlay').classList.remove('active');
   document.getElementById('badend-overlay').classList.remove('active');
 
+  // 背景・BGMはシーン種別に関わらず反映（値がある場合のみ）
+  applyBackground(scene.bg);
+  playBgm(scene.bgm);
+
   if(scene.type === 'line'){
     markReached(scene.id);
     document.getElementById('region-tag').textContent = scene.region || '';
     document.getElementById('speaker-name').textContent = scene.speaker || '';
     document.getElementById('dialogue-text').textContent = scene.text;
     document.getElementById('player-screen').classList.add('clickable');
+    applyCharImage(scene.charImg);
   } else if(scene.type === 'quiz'){
+    applyCharImage(null);
     renderQuiz(scene);
   } else if(scene.type === 'badend'){
+    applyCharImage(null);
     renderBadend(scene);
   }
+}
+
+let currentBgId = null;
+function applyBackground(bgId){
+  const el = document.getElementById('bg-image');
+  if(!bgId){ el.classList.remove('show'); currentBgId = null; return; }
+  if(bgId === currentBgId){ el.classList.add('show'); return; }
+  currentBgId = bgId;
+  el.classList.remove('show');
+  const src = IMG_DIR + bgId + '.jpg'; // 背景はJPEG・768×1376（縦長）で用意される想定
+  const img = new Image();
+  img.onload = ()=>{ el.src = src; el.classList.add('show'); };
+  img.onerror = ()=>{ el.classList.remove('show'); }; // 画像未配置でもレイアウトは崩さない
+  img.src = src;
+}
+
+/* ---------- 検査値キャラクター（画像なし・CSSバッジで表示） ---------- */
+const LAB_VALUES = {
+  'S20': {label:'Hb',      color:'var(--p2-red)'},
+  'S21': {label:'CRP',     color:'var(--p2-red)'},
+  'S22': {label:'HbA1c',   color:'var(--p3-gold)'},
+  'S23': {label:'AST/ALT', color:'var(--p4-teal)'},
+  'S24': {label:'γ-GTP',   color:'var(--p4-teal)'},
+  'S25': {label:'Alb',     color:'var(--p4-teal)'},
+  'S26': {label:'Cr',      color:'var(--p4-teal)'},
+  'S27': {label:'eGFR',    color:'var(--p4-teal)'}
+};
+
+let currentCharId = null;
+function applyCharImage(charId){
+  const imgEl = document.getElementById('char-image');
+  const badgeEl = document.getElementById('lab-badge');
+
+  if(!charId){
+    imgEl.classList.remove('show');
+    badgeEl.classList.remove('show');
+    currentCharId = null;
+    return;
+  }
+
+  // 検査値キャラクター → CSSバッジ表示（画像を使わない）
+  if(LAB_VALUES[charId]){
+    imgEl.classList.remove('show');
+    if(charId === currentCharId){ badgeEl.classList.add('show'); return; }
+    currentCharId = charId;
+    const info = LAB_VALUES[charId];
+    badgeEl.style.setProperty('--badge-color', info.color);
+    badgeEl.querySelector('.badge-label').textContent = info.label;
+    badgeEl.classList.add('show');
+    return;
+  }
+
+  // 通常キャラクター → 画像表示
+  badgeEl.classList.remove('show');
+  if(charId === currentCharId){ imgEl.classList.add('show'); return; }
+  currentCharId = charId;
+  imgEl.classList.remove('show');
+  const src = IMG_DIR + charId + '.png';
+  const img = new Image();
+  img.onload = ()=>{ imgEl.src = src; imgEl.classList.add('show'); };
+  img.onerror = ()=>{ imgEl.classList.remove('show'); };
+  img.src = src;
 }
 
 document.getElementById('player-screen').addEventListener('click', (e)=>{
