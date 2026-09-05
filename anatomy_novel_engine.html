@@ -288,7 +288,9 @@ if(window.visualViewport){
      { id, type:'line', speaker, text, region,
        bg:'BG01'などの背景ID（images/BG01.jpg を参照、768×1376のJPEG）,
        charImg:'C01-a'などのキャラ画像ID（images/C01-a.png を参照、透過PNG）,
-       bgm:'usual'|'pop'|'battle'|'unrest'（audio/○○.mp3 を参照） }
+       bgm:'usual'|'battle'（audio/○○.mp3 を参照。2種類のみ。
+         ここぞという場面でのみ切り替え、それ以外は同じ曲を
+         長く流し続けること） }
      ※ track（振り返り一覧）に載る「メインの筋」の一部
 
    quiz 型（分岐/知識確認クイズ）:
@@ -321,14 +323,14 @@ const PHASES = [
       {id:'p1-3', type:'line', region:'恒常性本部', speaker:'制御中枢長官', text:'報告を受けたら私が判断し、指令を出す。そして——', bg:'BG01', charImg:'C01-a', bgm:'usual'},
       {id:'p1-4', type:'line', region:'恒常性本部', speaker:'効果器（汗腺）', text:'指令が来たら、俺たち効果器が実際に体を動かす番だ。センサー→中枢→効果器。この3段階、覚えとけよ新人。', bg:'BG01', charImg:'S01', bgm:'usual'},
 
-      {id:'p1-5', type:'line', region:'循環器街 体温イベント', speaker:'センサー（体温担当）', text:'長官！ 皮膚と視床下部の温度受容器が異常値を検知！ 体温が上昇してます！', bg:'BG01', charImg:'C02-b', bgm:'unrest'},
-      {id:'p1-6', type:'line', region:'循環器街 体温イベント', speaker:'制御中枢長官', text:'受理した。効果器隊、出動——汗腺は発汗、血管は拡張しろ。放熱で下げる。', bg:'BG01', charImg:'C01-b', bgm:'unrest'},
-      {id:'p1-7', type:'line', region:'循環器街 体温イベント', speaker:'効果器（血管）', text:'拡張、開始……体温、低下し始めています。', bg:'BG01', charImg:'C03-b', bgm:'unrest'},
+      {id:'p1-5', type:'line', region:'循環器街 体温イベント', speaker:'センサー（体温担当）', text:'長官！ 皮膚と視床下部の温度受容器が異常値を検知！ 体温が上昇してます！', bg:'BG01', charImg:'C02-b', bgm:'usual'},
+      {id:'p1-6', type:'line', region:'循環器街 体温イベント', speaker:'制御中枢長官', text:'受理した。効果器隊、出動——汗腺は発汗、血管は拡張しろ。放熱で下げる。', bg:'BG01', charImg:'C01-b', bgm:'usual'},
+      {id:'p1-7', type:'line', region:'循環器街 体温イベント', speaker:'効果器（血管）', text:'拡張、開始……体温、低下し始めています。', bg:'BG01', charImg:'C03-b', bgm:'usual'},
       {id:'p1-8', type:'line', region:'循環器街 体温イベント', speaker:'センサー（体温担当）', text:'基準値に戻った……！ これが『上がったら、下げる方向に打ち消す』——負のフィードバックなんですね。', bg:'BG01', charImg:'C02-a', bgm:'usual'},
 
-      {id:'p1-9', type:'line', region:'血糖イベント', speaker:'センサー（血糖担当）', text:'長官、今度は血糖です！ 食後、急上昇しています！', bg:'BG01', charImg:'S02', bgm:'unrest'},
-      {id:'p1-10', type:'line', region:'血糖イベント', speaker:'インスリン', text:'呼ばれて参上。肝臓・筋肉・脂肪細胞のみんな、糖を取り込め！ 肝臓はグリコーゲンにして貯蔵だ。', bg:'BG01', charImg:'C07-b', bgm:'unrest'},
-      {id:'p1-11', type:'line', region:'血糖イベント', speaker:'インスリン', text:'……よし、下がった。上がったら下げる。これも同じ仕組みだな。', bg:'BG01', charImg:'C07-a', bgm:'unrest'},
+      {id:'p1-9', type:'line', region:'血糖イベント', speaker:'センサー（血糖担当）', text:'長官、今度は血糖です！ 食後、急上昇しています！', bg:'BG01', charImg:'S02', bgm:'usual'},
+      {id:'p1-10', type:'line', region:'血糖イベント', speaker:'インスリン', text:'呼ばれて参上。肝臓・筋肉・脂肪細胞のみんな、糖を取り込め！ 肝臓はグリコーゲンにして貯蔵だ。', bg:'BG01', charImg:'C07-b', bgm:'usual'},
+      {id:'p1-11', type:'line', region:'血糖イベント', speaker:'インスリン', text:'……よし、下がった。上がったら下げる。これも同じ仕組みだな。', bg:'BG01', charImg:'C07-a', bgm:'usual'},
 
       {id:'p1-quiz1', type:'quiz', badEnd:true, region:'血糖イベント', bg:'BG01', bgm:'battle',
         question:'空腹時、血糖値が下がりすぎたとき、体は何をして血糖を維持するか？',
@@ -339,15 +341,15 @@ const PHASES = [
         ],
         onCorrectNext:'p1-12', onWrongNext:'p1-badend1'
       },
-      {id:'p1-badend1', type:'badend', bg:'BG15', bgm:'unrest',
+      {id:'p1-badend1', type:'badend', bg:'BG15', bgm:'battle',
         title:'均衡が崩れた',
         text:'血糖が下がり続け、本部の機能が停止していく……。低血糖を放置すると、意識障害など深刻な事態につながる。もう一度、仕組みを考え直そう。',
         retryTarget:'p1-quiz1'
       },
       {id:'p1-12', type:'line', region:'血糖イベント', speaker:'グルカゴン', text:'その通り。上げ下げ両方向、俺たちで支えてる。', bg:'BG01', charImg:'C08-a', bgm:'usual'},
 
-      {id:'p1-13', type:'line', region:'血圧イベント', speaker:'センサー（血圧担当）', text:'長官！ 頸動脈洞と大動脈弓の圧受容器が反応！ 血圧上昇です！', bg:'BG01', charImg:'S03', bgm:'unrest'},
-      {id:'p1-14', type:'line', region:'血圧イベント', speaker:'制御中枢（延髄）', text:'受理。副交感神経、活性化しろ——心臓の拍数を落とせ、血管は拡張だ。', bg:'BG01', charImg:'C01-b', bgm:'unrest'},
+      {id:'p1-13', type:'line', region:'血圧イベント', speaker:'センサー（血圧担当）', text:'長官！ 頸動脈洞と大動脈弓の圧受容器が反応！ 血圧上昇です！', bg:'BG01', charImg:'S03', bgm:'usual'},
+      {id:'p1-14', type:'line', region:'血圧イベント', speaker:'制御中枢（延髄）', text:'受理。副交感神経、活性化しろ——心臓の拍数を落とせ、血管は拡張だ。', bg:'BG01', charImg:'C01-b', bgm:'usual'},
       {id:'p1-15', type:'line', region:'血圧イベント', speaker:'効果器（心臓）', text:'……拍数、低下。血圧、正常範囲に戻りました。', bg:'BG01', charImg:'C04-a', bgm:'usual'},
       {id:'p1-16', type:'line', region:'血圧イベント', speaker:'センサー（血圧担当）', text:'体温、血糖、血圧……全部同じ形をしてる。ズレを感知→中枢が判断→効果器が動く→戻る。これが恒常性の正体なんですね。', bg:'BG01', charImg:'S03', bgm:'usual'},
 
@@ -356,11 +358,11 @@ const PHASES = [
       {id:'p1-19', type:'line', region:'例外ゲスト', speaker:'オキシトシン', text:'出産のときの子宮収縮、それに血液凝固の連鎖——私たちは目的を達成するまで加速し続ける。でも。', bg:'BG01', charImg:'S04', bgm:'usual'},
       {id:'p1-20', type:'line', region:'例外ゲスト', speaker:'制御中枢長官', text:'目的達成後は、強制的に終了する。暴走を許さない設計だ、それも。', bg:'BG01', charImg:'C01-a', bgm:'usual'},
 
-      {id:'p1-21', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'新人、本部の建材も見ておけ。俺たち街は4種類の組織でできてる。上皮組織——被覆・分泌・吸収。皮膚や消化管の内壁を作ってる。', bg:'BG01', charImg:'C03-a', bgm:'pop'},
-      {id:'p1-22', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'結合組織——支持・連結・貯蔵担当。骨、軟骨、脂肪……あと、実は血液もここの仲間だ。', bg:'BG01', charImg:'C03-a', bgm:'pop'},
-      {id:'p1-23', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'筋組織——収縮・運動。骨格筋、心筋、平滑筋——お前も見ただろう、さっきの効果器たちだ。', bg:'BG01', charImg:'C03-a', bgm:'pop'},
-      {id:'p1-24', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'神経組織——情報伝達。俺たち長官やセンサーの正体はこれだ。', bg:'BG01', charImg:'C03-a', bgm:'pop'},
-      {id:'p1-25', type:'line', region:'区域見学', speaker:'センサー（体温担当）', text:'血液が結合組織って、意外でしょ？ 細胞成分と液体の基質でできてるから、分類上はそっちなの。', bg:'BG01', charImg:'C02-a', bgm:'pop'},
+      {id:'p1-21', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'新人、本部の建材も見ておけ。俺たち街は4種類の組織でできてる。上皮組織——被覆・分泌・吸収。皮膚や消化管の内壁を作ってる。', bg:'BG01', charImg:'C03-a', bgm:'usual'},
+      {id:'p1-22', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'結合組織——支持・連結・貯蔵担当。骨、軟骨、脂肪……あと、実は血液もここの仲間だ。', bg:'BG01', charImg:'C03-a', bgm:'usual'},
+      {id:'p1-23', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'筋組織——収縮・運動。骨格筋、心筋、平滑筋——お前も見ただろう、さっきの効果器たちだ。', bg:'BG01', charImg:'C03-a', bgm:'usual'},
+      {id:'p1-24', type:'line', region:'区域見学', speaker:'効果器（血管）', text:'神経組織——情報伝達。俺たち長官やセンサーの正体はこれだ。', bg:'BG01', charImg:'C03-a', bgm:'usual'},
+      {id:'p1-25', type:'line', region:'区域見学', speaker:'センサー（体温担当）', text:'血液が結合組織って、意外でしょ？ 細胞成分と液体の基質でできてるから、分類上はそっちなの。', bg:'BG01', charImg:'C02-a', bgm:'usual'},
 
       {id:'p1-quiz-final', type:'quiz', badEnd:false, region:'まとめクイズ', bg:'BG01', bgm:'usual',
         question:'（まとめクイズ・例題）体温上昇時、効果器が行う対応として正しいのは？',
@@ -371,9 +373,9 @@ const PHASES = [
         onCorrectNext:'p1-26', onWrongNext:null
       },
 
-      {id:'p1-26', type:'line', region:'エンディング', speaker:'制御中枢長官', text:'新人、よくやった。だが——最近、報告が妙に多い。個別の乱れではなく、何か……全体に共通する『空気の変質』のようなものを感じる。', bg:'BG01', charImg:'C01-b', bgm:'unrest'},
-      {id:'p1-27', type:'line', region:'エンディング', speaker:'センサー（体温担当）', text:'気のせいでは……？', bg:'BG01', charImg:'C02-a', bgm:'unrest'},
-      {id:'p1-28', type:'line', region:'エンディング', speaker:'制御中枢長官', text:'そうであってほしいがな。次は循環器街だ。行け。', bg:'BG01', charImg:'C01-b', bgm:'unrest'}
+      {id:'p1-26', type:'line', region:'エンディング', speaker:'制御中枢長官', text:'新人、よくやった。だが——最近、報告が妙に多い。個別の乱れではなく、何か……全体に共通する『空気の変質』のようなものを感じる。', bg:'BG01', charImg:'C01-b', bgm:'usual'},
+      {id:'p1-27', type:'line', region:'エンディング', speaker:'センサー（体温担当）', text:'気のせいでは……？', bg:'BG01', charImg:'C02-a', bgm:'usual'},
+      {id:'p1-28', type:'line', region:'エンディング', speaker:'制御中枢長官', text:'そうであってほしいがな。次は循環器街だ。行け。', bg:'BG01', charImg:'C01-b', bgm:'usual'}
     ]
   },
   // --- 以下、フェーズ2〜統合編は同じスキーマで追加可能 -----------------
@@ -430,41 +432,80 @@ function markReached(sceneId){
 const IMG_DIR = 'images/';
 const AUDIO_DIR = 'audio/';
 
-/* ---------- BGM（クロスフェード再生） ---------- */
+/* ---------- BGM（Web Audio APIのGainNodeで制御） ----------
+   HTMLMediaElementの.volumeはiOS Safariで無視される仕様のため、
+   Web Audio APIのGainNodeを介して音量制御・クロスフェード・
+   ミュートを行う。usual／battleの2種類のみを使用し、
+   ここぞという場面でのみ切り替える。
+------------------------------------------------------- */
+let audioCtx = null;
+let masterGain = null;
+const bgmNodes = {}; // 'a' | 'b' -> { el, gain }
 let bgmActive = 'a';
 let bgmCurrentKey = null;
 let bgmMuted = false;
 
+function initAudioGraph(){
+  if(audioCtx) return;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return; // 非対応環境では何もしない（音なしで進行）
+  audioCtx = new AC();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = bgmMuted ? 0 : 1;
+  masterGain.connect(audioCtx.destination);
+
+  ['a','b'].forEach(key=>{
+    const el = document.getElementById('bgm-' + key);
+    try{
+      const src = audioCtx.createMediaElementSource(el);
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0;
+      src.connect(gain).connect(masterGain);
+      bgmNodes[key] = { el, gain };
+    }catch(e){ /* 既に接続済み等は無視 */ }
+  });
+}
+
+function unlockAudioOnGesture(){
+  initAudioGraph();
+  if(audioCtx && audioCtx.state === 'suspended'){ audioCtx.resume(); }
+}
+
 function playBgm(key){
-  if(!key || key === bgmCurrentKey) return;
+  if(!key || key === bgmCurrentKey || !audioCtx) { bgmCurrentKey = key || bgmCurrentKey; return; }
   bgmCurrentKey = key;
   const nextId = bgmActive === 'a' ? 'b' : 'a';
-  const activeEl = document.getElementById('bgm-' + bgmActive);
-  const nextEl = document.getElementById('bgm-' + nextId);
-  nextEl.src = AUDIO_DIR + key + '.mp3';
-  nextEl.volume = 0;
-  nextEl.currentTime = 0;
-  if(!bgmMuted){ nextEl.play().catch(()=>{}); }
-  let step = 0;
-  const totalSteps = 20;
-  const timer = setInterval(()=>{
-    step++;
-    const t = step / totalSteps;
-    nextEl.volume = bgmMuted ? 0 : Math.min(1, t);
-    activeEl.volume = bgmMuted ? 0 : Math.max(0, 1 - t);
-    if(step >= totalSteps){
-      clearInterval(timer);
-      activeEl.pause();
-      bgmActive = nextId;
-    }
-  }, 60);
+  const activeNode = bgmNodes[bgmActive];
+  const nextNode = bgmNodes[nextId];
+  if(!activeNode || !nextNode) return;
+
+  nextNode.el.src = AUDIO_DIR + key + '.mp3';
+  nextNode.el.currentTime = 0;
+  nextNode.el.play().catch(()=>{});
+
+  const now = audioCtx.currentTime;
+  const fadeTime = 1.6; // じっくりクロスフェード
+  nextNode.gain.gain.cancelScheduledValues(now);
+  nextNode.gain.gain.setValueAtTime(0, now);
+  nextNode.gain.gain.linearRampToValueAtTime(1, now + fadeTime);
+
+  activeNode.gain.gain.cancelScheduledValues(now);
+  activeNode.gain.gain.setValueAtTime(activeNode.gain.gain.value, now);
+  activeNode.gain.gain.linearRampToValueAtTime(0, now + fadeTime);
+
+  const prevEl = activeNode.el;
+  setTimeout(()=>{ prevEl.pause(); }, fadeTime * 1000 + 150);
+
+  bgmActive = nextId;
 }
 
 document.getElementById('btn-mute').addEventListener('click', (e)=>{
   bgmMuted = !bgmMuted;
   e.target.textContent = bgmMuted ? '🔇' : '🔊';
-  document.getElementById('bgm-a').volume = bgmMuted ? 0 : (bgmActive==='a' ? 1 : 0);
-  document.getElementById('bgm-b').volume = bgmMuted ? 0 : (bgmActive==='b' ? 1 : 0);
+  if(masterGain && audioCtx){
+    masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+    masterGain.gain.setValueAtTime(bgmMuted ? 0 : 1, audioCtx.currentTime);
+  }
 });
 
 /* ---------- 画面切り替え ---------- */
@@ -475,9 +516,13 @@ function showScreen(id){
 
 /* ---------- タイトル ---------- */
 document.getElementById('btn-start').addEventListener('click', ()=>{
+  unlockAudioOnGesture();
   startPhase('phase1', 0);
 });
-document.getElementById('btn-continue').addEventListener('click', renderTrackScreen);
+document.getElementById('btn-continue').addEventListener('click', ()=>{
+  unlockAudioOnGesture();
+  renderTrackScreen();
+});
 document.getElementById('btn-track-back').addEventListener('click', ()=> showScreen('title-screen'));
 document.getElementById('btn-open-track').addEventListener('click', renderTrackScreen);
 
