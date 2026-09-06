@@ -149,7 +149,7 @@
     position:absolute;inset:0;background:rgba(15,22,38,.94);display:none;
     flex-direction:column;justify-content:center;gap:16px;
     padding:28px 28px calc(28px + env(safe-area-inset-bottom));
-    overflow-y:auto;
+    overflow-y:auto;z-index:20;
   }
   #quiz-overlay.active{display:flex;}
   #quiz-overlay .tag{font-size:.7rem;color:var(--accent-artery);letter-spacing:.15em;font-weight:700;}
@@ -170,7 +170,7 @@
     position:absolute;inset:0;background:#0A0D16;display:none;
     flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;
     padding:30px 30px calc(30px + env(safe-area-inset-bottom));
-    overflow-y:auto;
+    overflow-y:auto;z-index:21;
   }
   #badend-overlay.active{display:flex;}
   .glitch-vessel{width:140px;height:140px;position:relative;}
