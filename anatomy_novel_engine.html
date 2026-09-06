@@ -86,6 +86,41 @@
   .track-node.current::before{background:var(--accent-vein);border-color:var(--accent-vein);}
   #track-screen .footer-row{padding-top:10px;border-top:1px solid var(--line-lock);}
 
+  /* ---------- 用語解説パネル ---------- */
+  #glossary-screen{padding:28px 20px calc(20px + env(safe-area-inset-bottom));overflow:hidden;}
+  #glossary-screen h2{font-family:'Shippori Mincho',serif;font-size:1.15rem;margin:0 0 12px;}
+  .glossary-tabbar{display:flex;gap:8px;margin-bottom:14px;}
+  .glossary-tabbar button{
+    flex:1;background:var(--bg-panel-2);border:1px solid var(--line-lock);color:var(--text-sub);
+    padding:9px 0;border-radius:2px;font-size:.85rem;cursor:pointer;font-family:inherit;
+  }
+  .glossary-tabbar button.active{color:var(--text-main);border-color:var(--accent-vein);}
+  #glossary-list{flex:1;overflow-y:auto;padding-bottom:24px;}
+  .glossary-phase-label{
+    font-family:'Shippori Mincho',serif;font-size:.78rem;color:var(--text-sub);
+    margin:16px 0 6px;letter-spacing:.08em;
+  }
+  .glossary-phase-label:first-child{margin-top:0;}
+  .glossary-entry{
+    display:flex;gap:12px;align-items:flex-start;padding:10px 0;
+    border-bottom:1px solid var(--line-lock);cursor:pointer;
+  }
+  .glossary-entry .g-portrait{
+    width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top center;
+    background:var(--bg-panel-2);border:1px solid var(--line-lock);flex-shrink:0;
+  }
+  .glossary-entry .g-portrait.hidden{display:none;}
+  .glossary-entry .g-body{flex:1;min-width:0;}
+  .glossary-entry .g-name{font-weight:700;font-size:.92rem;color:var(--text-main);}
+  .glossary-entry .g-brief{font-size:.8rem;color:var(--text-sub);margin-top:2px;}
+  .glossary-entry .g-detail{
+    display:none;font-size:.82rem;color:var(--text-main);line-height:1.75;
+    margin-top:8px;padding-top:8px;border-top:1px dashed var(--line-lock);
+  }
+  .glossary-entry.open .g-detail{display:block;}
+  .glossary-entry .g-toggle{color:var(--text-sub);font-size:.7rem;margin-left:auto;flex-shrink:0;}
+  #glossary-screen .footer-row{padding-top:10px;border-top:1px solid var(--line-lock);}
+
   /* ---------- Player ---------- */
   #player-screen{justify-content:flex-end;}
   #scene-bg{flex:1;position:relative;overflow:hidden;z-index:1;}
@@ -219,6 +254,16 @@
     </div>
   </div>
 
+  <!-- ===== 用語解説パネル ===== -->
+  <div id="glossary-screen" class="screen">
+    <h2>用語解説</h2>
+    <div class="glossary-tabbar" id="glossary-tabbar"></div>
+    <div id="glossary-list"></div>
+    <div class="footer-row">
+      <button class="btn secondary" id="btn-glossary-back">戻る</button>
+    </div>
+  </div>
+
   <!-- ===== プレイ画面 ===== -->
   <div id="player-screen" class="screen">
     <div id="topbar">
@@ -228,6 +273,7 @@
       </span>
       <div class="topbar-right">
         <button id="btn-mute">🔊</button>
+        <button id="btn-open-glossary">用語解説</button>
         <button id="btn-open-track">記録を見る</button>
       </div>
     </div>
@@ -328,6 +374,30 @@ const PHASES = [
   {
     id: 'phase1',
     title: 'フェーズ1｜恒常性本部',
+    glossary: {
+      characters: [
+        {name:'制御中枢長官', charImg:'C01-a', brief:'恒常性本部を統括する管理者', detail:'視床下部や延髄など、体温・血糖・血圧といった複数の調整中枢を象徴する存在。全身のセンサーからの報告を受け、効果器に指令を出す司令塔役。'},
+        {name:'センサー（体温担当）', charImg:'C02-a', brief:'体温の変化を検知する係', detail:'皮膚や視床下部にある温度受容器を擬人化したキャラクター。基準値からのズレを検知し、中枢へ報告する。'},
+        {name:'効果器（血管）', charImg:'C03-a', brief:'血管の拡張・収縮を担当する実行部隊', detail:'血管平滑筋の働きを擬人化。指令を受けて血管を拡張し、放熱を助けるなどの実行動作を行う。'},
+        {name:'効果器（汗腺）', charImg:'S01', brief:'発汗による体温調節を担当', detail:'汗腺の働きを擬人化。指令を受けて発汗し、気化熱で体温を下げる。'},
+        {name:'インスリン', charImg:'C07-a', brief:'血糖を下げるホルモン', detail:'膵臓β細胞から分泌され、細胞への糖の取り込みや肝臓でのグリコーゲン合成を促進し、血糖値を低下させる。'},
+        {name:'グルカゴン', charImg:'C08-a', brief:'血糖を上げるホルモン', detail:'空腹時に分泌され、グリコーゲンの分解と糖新生を促進して血糖値を維持する、インスリンと逆方向に働くホルモン。'},
+        {name:'センサー（血糖担当）', charImg:'S02', brief:'血糖値の変化を検知する係', detail:'血糖値の上昇・低下を検知し、中枢（膵臓）へ伝える役目の擬人化キャラクター。'},
+        {name:'センサー（血圧担当）', charImg:'S03', brief:'血圧の変化を検知する係', detail:'頸動脈洞・大動脈弓にある圧受容器を擬人化したキャラクター。'},
+        {name:'オキシトシン', charImg:'S04', brief:'変化を増幅する例外的なホルモン', detail:'通常の負のフィードバックとは逆に、出産時の子宮収縮など変化を加速させる正のフィードバックの代表例。目的達成後は分泌が強制的に止まる設計になっている。'}
+      ],
+      terms: [
+        {name:'恒常性（ホメオスタシス）', brief:'体内環境を一定に保つ仕組み', detail:'体温・血糖・血圧などを、受容器→制御中枢→効果器という3段階のフィードバック機構で一定範囲に保つ生体の基本原理。'},
+        {name:'負のフィードバック', brief:'変化を打ち消す方向に働く調節', detail:'値が基準から外れた時、それを打ち消す方向に反応が起こり、元に戻そうとする仕組み。体温・血糖・血圧の調節はすべてこの型に当てはまる。'},
+        {name:'正のフィードバック', brief:'変化をさらに増幅する例外的な仕組み', detail:'出産時の子宮収縮や血液凝固の連鎖など、変化を止めるのではなく加速させる稀な機構。体内では例外的な存在で、目的達成後は強制的に停止する設計になっている。'},
+        {name:'受容器・制御中枢・効果器', brief:'恒常性を支える3つの役割', detail:'受容器が変化を感知し、制御中枢が判断して指令を出し、効果器が実際に体を動かして基準値に戻す。この3段階構造が恒常性の基本骨格。'},
+        {name:'グリコーゲン', brief:'糖の貯蔵形態', detail:'血糖が高い時、余った糖を肝臓や筋肉に貯蔵するための多糖類。血糖が下がるとグリコーゲンが分解されて糖が血中に放出される。'},
+        {name:'糖新生（とうしんせい）', brief:'糖以外の物質から糖を作り出す仕組み', detail:'空腹が続きグリコーゲンが枯渇した際、アミノ酸などの糖以外の物質から肝臓が新たにグルコースを合成する経路。'},
+        {name:'頸動脈洞・大動脈弓', brief:'血圧を感知するセンサーの場所', detail:'首と心臓付近にある圧受容器の部位。血圧の変化を感知し、延髄へ伝える。'},
+        {name:'副交感神経', brief:'心拍数を落ち着かせる神経', detail:'血圧が上がりすぎた時などに活性化し、心拍数を低下させ、血管を拡張させることで血圧を正常範囲に戻す働きを持つ。'},
+        {name:'上皮・結合・筋・神経組織', brief:'人体を構成する4つの基本組織', detail:'上皮組織（被覆・分泌・吸収）、結合組織（支持・連結・貯蔵、血液もここに分類される）、筋組織（収縮・運動）、神経組織（情報伝達）の4種類。あらゆる器官はこの4組織の組み合わせでできている。'}
+      ]
+    },
     scenes: [
       {id:'p1-1', type:'line', region:'恒常性本部', speaker:'制御中枢長官', text:'ようこそ、恒常性本部へ。この体を守る仕組みは単純だ——狂ったら、戻す。それだけだ。', bg:'BG01', charImg:'C01-a', bgm:'usual'},
       {id:'p1-2', type:'line', region:'恒常性本部', speaker:'センサー（体温担当）', text:'私たちセンサーは常に外と中の状態を見張ってる。何かがズレたら、すぐ長官に報告するの。', bg:'BG01', charImg:'C02-a', bgm:'usual'},
@@ -536,6 +606,81 @@ document.getElementById('btn-continue').addEventListener('click', ()=>{
 });
 document.getElementById('btn-track-back').addEventListener('click', ()=> showScreen('title-screen'));
 document.getElementById('btn-open-track').addEventListener('click', renderTrackScreen);
+
+/* ---------- 用語解説パネル ---------- */
+let glossaryReturnScreen = 'title-screen';
+let glossaryTab = 'characters';
+const GLOSSARY_TABS = [['characters','人物'],['terms','用語']];
+
+document.getElementById('btn-open-glossary').addEventListener('click', ()=>{
+  glossaryReturnScreen = 'player-screen';
+  renderGlossaryScreen();
+});
+document.getElementById('btn-glossary-back').addEventListener('click', ()=>{
+  showScreen(glossaryReturnScreen);
+});
+
+function renderGlossaryScreen(){
+  const tabbar = document.getElementById('glossary-tabbar');
+  tabbar.innerHTML = '';
+  GLOSSARY_TABS.forEach(([key, label])=>{
+    const b = document.createElement('button');
+    b.textContent = label;
+    if(glossaryTab === key) b.classList.add('active');
+    b.addEventListener('click', ()=>{ glossaryTab = key; renderGlossaryScreen(); });
+    tabbar.appendChild(b);
+  });
+
+  const list = document.getElementById('glossary-list');
+  list.innerHTML = '';
+  let any = false;
+
+  PHASES.forEach(phase=>{
+    if(!phase.glossary) return;
+    const entries = phase.glossary[glossaryTab] || [];
+    if(entries.length === 0) return;
+    any = true;
+
+    const label = document.createElement('div');
+    label.className = 'glossary-phase-label';
+    label.textContent = phase.title;
+    list.appendChild(label);
+
+    entries.forEach(item=>{
+      const e = document.createElement('div');
+      e.className = 'glossary-entry';
+
+      if(item.charImg){
+        const img = document.createElement('img');
+        img.className = 'g-portrait';
+        img.src = IMG_DIR + item.charImg + '.png';
+        img.alt = '';
+        img.onerror = ()=>{ img.classList.add('hidden'); }; // 立ち絵が無い場合は非表示
+        e.appendChild(img);
+      }
+
+      const body = document.createElement('div');
+      body.className = 'g-body';
+      body.innerHTML =
+        '<div class="g-name">' + item.name + '</div>' +
+        '<div class="g-brief">' + item.brief + '</div>' +
+        '<div class="g-detail">' + (item.detail || item.brief) + '</div>';
+      e.appendChild(body);
+
+      e.addEventListener('click', ()=> e.classList.toggle('open'));
+      list.appendChild(e);
+    });
+  });
+
+  if(!any){
+    const empty = document.createElement('p');
+    empty.className = 'hint';
+    empty.textContent = 'このカテゴリにはまだ項目がありません。';
+    list.appendChild(empty);
+  }
+
+  showScreen('glossary-screen');
+}
 
 /* ---------- シーン振り返り（血管ライン） ---------- */
 function renderTrackScreen(){
