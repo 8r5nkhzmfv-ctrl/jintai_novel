@@ -297,7 +297,7 @@ if(window.visualViewport){
 
    line 型（通常セリフ）:
      { id, type:'line', speaker, text, region,
-       bg:'BG01'などの背景ID（images/BG01.jpg を参照、768×1376のJPEG）,
+       bg:'BG01'などの背景ID（images/BG01.jpeg を参照、768×1376のJPEG）,
        charImg:'C01-a'などのキャラ画像ID（images/C01-a.png を参照、透過PNG）,
        bgm:'usual'|'battle'（audio/○○.mp3 を参照。2種類のみ。
          ここぞという場面でのみ切り替え、それ以外は同じ曲を
@@ -612,7 +612,7 @@ function applyBackground(bgId){
   if(bgId === currentBgId){ el.classList.add('show'); return; }
   currentBgId = bgId;
   el.classList.remove('show');
-  const src = IMG_DIR + bgId + '.jpg'; // 背景はJPEG・768×1376（縦長）で用意される想定
+  const src = IMG_DIR + bgId + '.jpeg'; // 背景はJPEG（拡張子.jpeg）・768×1376（縦長）
   const img = new Image();
   img.onload = ()=>{ el.src = src; el.classList.add('show'); };
   img.onerror = ()=>{ el.classList.remove('show'); }; // 画像未配置でもレイアウトは崩さない
