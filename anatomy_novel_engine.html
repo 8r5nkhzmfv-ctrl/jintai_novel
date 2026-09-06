@@ -87,26 +87,32 @@
   #track-screen .footer-row{padding-top:10px;border-top:1px solid var(--line-lock);}
 
   /* ---------- Player ---------- */
-  #player-screen{justify-content:flex-end;}
-  #scene-bg{flex:1;position:relative;overflow:hidden;}
+  #player-screen{justify-content:flex-end;position:relative;}
+  #scene-bg{flex:1;position:relative;overflow:hidden;z-index:1;}
   #bg-image{
     position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
     opacity:0;transition:opacity .5s ease;
   }
   #bg-image.show{opacity:.92;}
+
+  /* キャラクター画像：#player-screen直下に配置し、メッセージウィンドウへ
+     食い込むよう大きく表示する。z-indexはtopbarより下・dialogue-boxより下
+     （dialogue-boxの半透明グラデーションで足元が自然に隠れる） */
   #char-image{
     position:absolute;bottom:0;left:50%;transform:translateX(-50%);
-    height:94%;max-height:680px;object-fit:contain;
+    height:118%;max-height:920px;object-fit:contain;
     filter:drop-shadow(0 14px 26px rgba(0,0,0,.45));
     opacity:0;transition:opacity .35s ease;
+    z-index:2;pointer-events:none;
   }
   #char-image.show{opacity:1;}
 
   /* ---------- 検査値バッジ（画像なし・CSSでデザイン） ---------- */
   #lab-badge{
-    position:absolute;bottom:14%;left:50%;transform:translateX(-50%) scale(.85);
+    position:absolute;bottom:22%;left:50%;transform:translateX(-50%) scale(.85);
     display:none;flex-direction:column;align-items:center;gap:8px;
     opacity:0;transition:opacity .35s ease, transform .35s ease;
+    z-index:2;
   }
   #lab-badge.show{display:flex;opacity:1;transform:translateX(-50%) scale(1);}
   #lab-badge .badge-ring{
@@ -123,14 +129,9 @@
   #lab-badge .badge-caption{
     font-size:.7rem;color:var(--text-sub);letter-spacing:.1em;
   }
-  #scene-bg .region-tag{
-    position:absolute;top:14px;left:50%;transform:translateX(-50%);
-    background:rgba(15,22,38,.55);padding:5px 16px;border-radius:20px;
-    font-family:'Shippori Mincho',serif;color:var(--text-sub);font-size:.78rem;
-    letter-spacing:.12em;
-  }
   #dialogue-box{
-    background:linear-gradient(180deg, rgba(22,34,59,0) 0%, var(--bg-panel) 18%);
+    position:relative;z-index:3;
+    background:linear-gradient(180deg, rgba(22,34,59,0) 0%, var(--bg-panel) 22%);
     padding:18px 22px calc(26px + env(safe-area-inset-bottom));
     min-height:180px;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;
     flex-shrink:0;
@@ -179,7 +180,15 @@
   #badend-overlay h3{font-family:'Shippori Mincho',serif;color:var(--accent-artery);font-size:1.1rem;margin:0;letter-spacing:.05em;}
   #badend-overlay p{color:var(--text-sub);font-size:.88rem;line-height:1.8;max-width:480px;margin:0;}
 
-  #topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;color:var(--text-sub);font-size:.75rem;}
+  #topbar{
+    display:flex;justify-content:space-between;align-items:center;padding:14px 18px;
+    color:var(--text-sub);font-size:.75rem;position:relative;z-index:10;
+    background:linear-gradient(180deg, rgba(15,22,38,.65) 0%, rgba(15,22,38,0) 100%);
+  }
+  #region-tag{
+    display:block;font-family:'Shippori Mincho',serif;font-size:.7rem;
+    color:var(--text-sub);letter-spacing:.1em;margin-top:2px;opacity:.85;
+  }
   #topbar button{background:none;border:none;color:var(--text-sub);font-size:.75rem;cursor:pointer;font-family:inherit;}
   #topbar button:hover{color:var(--text-main);}
   #topbar .topbar-right{display:flex;align-items:center;gap:14px;}
@@ -213,7 +222,10 @@
   <!-- ===== プレイ画面 ===== -->
   <div id="player-screen" class="screen">
     <div id="topbar">
-      <span id="phase-title-tag"></span>
+      <span>
+        <span id="phase-title-tag"></span>
+        <span id="region-tag"></span>
+      </span>
       <div class="topbar-right">
         <button id="btn-mute">🔊</button>
         <button id="btn-open-track">記録を見る</button>
@@ -221,12 +233,11 @@
     </div>
     <div id="scene-bg">
       <img id="bg-image" src="" alt="">
-      <img id="char-image" src="" alt="">
-      <div id="lab-badge">
-        <div class="badge-ring"><span class="badge-label"></span></div>
-        <span class="badge-caption">検査値</span>
-      </div>
-      <span class="region-tag" id="region-tag"></span>
+    </div>
+    <img id="char-image" src="" alt="">
+    <div id="lab-badge">
+      <div class="badge-ring"><span class="badge-label"></span></div>
+      <span class="badge-caption">検査値</span>
     </div>
     <div id="dialogue-box">
       <div id="speaker-name"></div>
